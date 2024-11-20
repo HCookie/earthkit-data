@@ -175,7 +175,8 @@ class Field(Base):
         if array_backend is not None:
             v = convert_array(v, target_backend=array_backend)
 
-        v = self._reshape(v, flatten)
+        if flatten:
+            v = self._reshape(v, flatten)
         if index is not None:
             v = v[index]
         return v

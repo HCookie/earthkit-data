@@ -78,6 +78,10 @@ class ArrayBackend(metaclass=ABCMeta):
     def from_other(self, v, **kwargs):
         pass
 
+    @abstractmethod
+    def make_like(self, old, new):
+        pass
+
     @property
     @abstractmethod
     def dtypes(self):
@@ -125,6 +129,10 @@ class NumpyBackend(ArrayBackend):
 
         return np.array(v, **kwargs)
 
+    def make_like(self, old, new):
+
+        return self.from_other(new, dtype=old.dtype)
+
     @cached_property
     def dtypes(self):
         import numpy
@@ -158,7 +166,14 @@ class PytorchBackend(ArrayBackend):
     def from_other(self, v, **kwargs):
         import torch
 
-        return torch.tensor(v, **kwargs)
+        if not kwargs and isinstance(v, torch.Tensor):
+            return v
+
+        return torch.asarray(v, **kwargs)
+
+    def make_like(self, old, new):
+
+        return self.from_other(new).to(dtype=old.dtype, device=old.device)
 
     @cached_property
     def dtypes(self):
@@ -194,6 +209,10 @@ class JaxBackend(ArrayBackend):
 
         return jarray.array(v, **kwargs)
 
+    def make_like(self, old, new):
+
+        return self.from_other(new, dtype=old.dtype, device=old.device)
+
     @cached_property
     def dtypes(self):
         import jax.numpy as jarray
@@ -226,6 +245,10 @@ class CupyBackend(ArrayBackend):
         import cupy as cp
 
         return cp.array(v, **kwargs)
+
+    def make_like(self, old, new):
+
+        return self.from_other(new, dtype=old.dtype)
 
     @cached_property
     def dtypes(self):
